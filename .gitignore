@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+private/*
+!private/README.txt
+esp32_tutorial9_firebase/sensor_config.h
+*.json
+!package.json
+!package-lock.json
+!FIREBASE_RULES_NEW_PROJECT.json
+__pycache__/
+.venv/
+.vscode/
+.idea/
+*.pyc

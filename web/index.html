@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ELEC 3111 · Tutorial 9 Cloud IoT Monitoring</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/plotly-latest.min.js"></script>
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <p class="eyebrow">ELEC 3111 · Tutorial 9 · 5-mark demo</p>
+      <h1>Cloud IoT Monitoring System</h1>
+      <p class="subtitle">ESP32 → Firebase Realtime Database → Cloud Python Analytics → Browser</p>
+      <nav><a href="/">Dashboard</a><a href="/mlr">Multiple Linear Regression</a><a href="/mlp">Multilayer Perceptron</a></nav>
+    </div>
+  </header>
+  <main class="container">
+    <div id="modeLabel" class="banner">Connecting to cloud analytics server…</div>
+    <section id="dashboard" class="page">
+      <h2>Live Temperature &amp; Humidity</h2>
+      <p class="help">No database selector, server IP or port input. The browser connects directly to the public server URL.</p>
+      <div class="grid">
+        <article class="metric"><div class="metric-label">Temperature</div><div id="temperature" class="big">—</div><div>Degrees Celsius (°C)</div></article>
+        <article class="metric"><div class="metric-label">Humidity</div><div id="humidity" class="big">—</div><div>Relative humidity (%)</div></article>
+      </div>
+      <p id="lastSeen" class="help">No reading loaded yet.</p>
+      <div class="actions"><button id="refresh">Refresh now</button><a class="btn secondary" href="/api/csv?limit=300">Download CSV</a></div>
+      <div id="livePlot" class="plot" role="img" aria-label="Sensor history"></div>
+      <h3>Recent sensor readings</h3>
+      <table><thead><tr><th>Time</th><th>Temperature (°C)</th><th>Humidity (%)</th></tr></thead><tbody id="readingsBody"></tbody></table>
+    </section>
+    <section id="analysis" class="page hidden">
+      <h2 id="analysisTitle">Analysis</h2>
+      <p class="help">Calculated on the Python cloud server from the newest Firebase readings, not in the browser.</p>
+      <form id="analysisForm">
+        <div class="form-grid">
+          <label>Parameter to predict
+            <select name="target"><option value="temperature">Temperature</option><option value="humidity">Humidity</option></select>
+          </label>
+          <label>Steps ahead (readings)
+            <input type="number" name="steps" value="1" min="1" max="100" required>
+          </label>
+          <label>Readings for analysis
+            <input type="number" name="rows" value="300" min="60" max="1000" required>
+          </label>
+          <label>Preprocessing scale
+            <select name="scale"><option value="none">None</option><option value="normalize">Normalize [0,1]</option><option value="standardize">Standardize (z-score)</option></select>
+          </label>
+          <label class="check"><input type="checkbox" name="removeOutliers"> Remove outliers (IQR)</label>
+        </div>
+        <fieldset id="mlpParams" class="hidden"><legend>MLP neural-network settings</legend>
+          <div class="form-grid">
+            <label>Input window (readings)<input type="number" name="window" value="10" min="2" max="40"></label>
+            <label>Hidden neurons<input type="number" name="hidden" value="12" min="2" max="32"></label>
+            <label>Hidden layers<input type="number" name="hiddenLayers" value="1" min="1" max="2"></label>
+            <label>Training epochs<input type="number" name="epochs" value="200" min="1" max="600"></label>
+            <label>Learning rate<input type="number" name="lr" value="0.01" step="any" min="0.0001" max="0.1"></label>
+            <label>Momentum<input type="number" name="momentum" value="0.9" step="0.05" min="0" max="0.99"></label>
+          </div>
+        </fieldset>
+        <button id="analyzeBtn" type="submit">ANALYSE DATA ON CLOUD SERVER</button>
+      </form>
+      <div id="analysisResult" class="result" aria-live="polite">Press Analyse Data to calculate results.</div>
+      <div class="chart-actions">
+        <label for="historyWindow">History displayed on forecast graph
+          <select id="historyWindow">
+            <option value="60">Last 60 readings</option>
+            <option value="120">Last 120 readings</option>
+            <option value="all">All readings used</option>
+          </select>
+        </label>
+        <p id="forecastExplanation" class="help">Run the analysis to plot actual Firebase measurements and the future forecast.</p>
+      </div>
+      <div id="forecastPlot" class="plot" role="img" aria-label="Actual sensor readings and model forecast"></div>
+    </section>
+  </main>
+  <footer><div class="container">ELEC 3111 · Tutorial 9 · Firebase data path: <code>tutorial9/readings</code> · No MySQL</div></footer>
+</body>
+</html>
