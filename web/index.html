@@ -3,80 +3,800 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <title>ELEC 3111 · Tutorial 9 Cloud IoT Monitoring</title>
+
   <link rel="stylesheet" href="/styles.css">
+
   <script defer src="/plotly-latest.min.js"></script>
   <script defer src="/app.js"></script>
+
+  <style>
+    /* ESP32 online/offline status indicator */
+
+    .esp32-status-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      margin: 14px 0 20px;
+    }
+
+    #esp32Status {
+      background: #64748b;
+    }
+
+    #esp32StatusDetail {
+      color: #5b7082;
+      font-size: .93rem;
+    }
+  </style>
+
 </head>
+
 <body>
+
+  <!-- WEBSITE HEADER -->
+
   <header>
     <div class="container">
-      <p class="eyebrow">ELEC 3111 · Tutorial 9 · 5-mark demo</p>
+
+      <p class="eyebrow">
+        ELEC 3111 · Tutorial 9 · 5-mark demo
+      </p>
+
       <h1>Cloud IoT Monitoring System</h1>
-      <p class="subtitle">ESP32 → Firebase Realtime Database → Cloud Python Analytics → Browser</p>
-      <nav><a href="/">Dashboard</a><a href="/mlr">Multiple Linear Regression</a><a href="/mlp">Multilayer Perceptron</a></nav>
+
+      <p class="subtitle">
+        ESP32 → Firebase Realtime Database →
+        Cloud Python Analytics → Browser
+      </p>
+
+      <nav>
+        <a href="/">Dashboard</a>
+        <a href="/mlr">Multiple Linear Regression</a>
+        <a href="/mlp">Multilayer Perceptron</a>
+      </nav>
+
     </div>
   </header>
+
+
+  <!-- MAIN CONTENT -->
+
   <main class="container">
-    <div id="modeLabel" class="banner">Connecting to cloud analytics server…</div>
+
+    <div id="modeLabel" class="banner">
+      Connecting to cloud analytics server…
+    </div>
+
+
+    <!-- DASHBOARD -->
+
     <section id="dashboard" class="page">
+
       <h2>Live Temperature &amp; Humidity</h2>
-      <p class="help">No database selector, server IP or port input. The browser connects directly to the public server URL.</p>
+
+      <p class="help">
+        No database selector, server IP or port input.
+        The browser connects directly to the public server URL.
+      </p>
+
+
+      <!-- ESP32 STATUS BUTTON -->
+
+      <div class="esp32-status-row" aria-live="polite">
+
+        <button id="esp32Status" type="button">
+          ⚪ ESP32: CHECKING…
+        </button>
+
+        <span id="esp32StatusDetail">
+          Checking the latest Firebase measurement…
+        </span>
+
+      </div>
+
+
+      <!-- LIVE SENSOR VALUES -->
+
       <div class="grid">
-        <article class="metric"><div class="metric-label">Temperature</div><div id="temperature" class="big">—</div><div>Degrees Celsius (°C)</div></article>
-        <article class="metric"><div class="metric-label">Humidity</div><div id="humidity" class="big">—</div><div>Relative humidity (%)</div></article>
-      </div>
-      <p id="lastSeen" class="help">No reading loaded yet.</p>
-      <div class="actions"><button id="refresh">Refresh now</button><a class="btn secondary" href="/api/csv?limit=300">Download CSV</a></div>
-      <div id="livePlot" class="plot" role="img" aria-label="Sensor history"></div>
-      <h3>Recent sensor readings</h3>
-      <table><thead><tr><th>Time</th><th>Temperature (°C)</th><th>Humidity (%)</th></tr></thead><tbody id="readingsBody"></tbody></table>
-    </section>
-    <section id="analysis" class="page hidden">
-      <h2 id="analysisTitle">Analysis</h2>
-      <p class="help">Calculated on the Python cloud server from the newest Firebase readings, not in the browser.</p>
-      <form id="analysisForm">
-        <div class="form-grid">
-          <label>Parameter to predict
-            <select name="target"><option value="temperature">Temperature</option><option value="humidity">Humidity</option></select>
-          </label>
-          <label>Steps ahead (readings)
-            <input type="number" name="steps" value="1" min="1" max="100" required>
-          </label>
-          <label>Readings for analysis
-            <input type="number" name="rows" value="300" min="60" max="1000" required>
-          </label>
-          <label>Preprocessing scale
-            <select name="scale"><option value="none">None</option><option value="normalize">Normalize [0,1]</option><option value="standardize">Standardize (z-score)</option></select>
-          </label>
-          <label class="check"><input type="checkbox" name="removeOutliers"> Remove outliers (IQR)</label>
-        </div>
-        <fieldset id="mlpParams" class="hidden"><legend>MLP neural-network settings</legend>
-          <div class="form-grid">
-            <label>Input window (readings)<input type="number" name="window" value="10" min="2" max="40"></label>
-            <label>Hidden neurons<input type="number" name="hidden" value="12" min="2" max="32"></label>
-            <label>Hidden layers<input type="number" name="hiddenLayers" value="1" min="1" max="2"></label>
-            <label>Training epochs<input type="number" name="epochs" value="200" min="1" max="600"></label>
-            <label>Learning rate<input type="number" name="lr" value="0.01" step="any" min="0.0001" max="0.1"></label>
-            <label>Momentum<input type="number" name="momentum" value="0.9" step="0.05" min="0" max="0.99"></label>
+
+        <article class="metric">
+
+          <div class="metric-label">
+            Temperature
           </div>
-        </fieldset>
-        <button id="analyzeBtn" type="submit">ANALYSE DATA ON CLOUD SERVER</button>
-      </form>
-      <div id="analysisResult" class="result" aria-live="polite">Press Analyse Data to calculate results.</div>
-      <div class="chart-actions">
-        <label for="historyWindow">History displayed on forecast graph
-          <select id="historyWindow">
-            <option value="60">Last 60 readings</option>
-            <option value="120">Last 120 readings</option>
-            <option value="all">All readings used</option>
-          </select>
-        </label>
-        <p id="forecastExplanation" class="help">Run the analysis to plot actual Firebase measurements and the future forecast.</p>
+
+          <div id="temperature" class="big">—</div>
+
+          <div>
+            Degrees Celsius (°C)
+          </div>
+
+        </article>
+
+
+        <article class="metric">
+
+          <div class="metric-label">
+            Humidity
+          </div>
+
+          <div id="humidity" class="big">—</div>
+
+          <div>
+            Relative humidity (%)
+          </div>
+
+        </article>
+
       </div>
-      <div id="forecastPlot" class="plot" role="img" aria-label="Actual sensor readings and model forecast"></div>
+
+
+      <!-- LAST SENSOR RECORD -->
+
+      <p id="lastSeen" class="help">
+        No reading loaded yet.
+      </p>
+
+
+      <!-- DASHBOARD BUTTONS -->
+
+      <div class="actions">
+
+        <button id="refresh">
+          Refresh now
+        </button>
+
+        <a
+          class="btn secondary"
+          href="/api/csv?limit=300">
+          Download CSV
+        </a>
+
+      </div>
+
+
+      <!-- LIVE GRAPH -->
+
+      <div
+        id="livePlot"
+        class="plot"
+        role="img"
+        aria-label="Sensor history">
+      </div>
+
+
+      <!-- RECENT SENSOR READINGS -->
+
+      <h3>Recent sensor readings</h3>
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Temperature (°C)</th>
+            <th>Humidity (%)</th>
+          </tr>
+        </thead>
+
+        <tbody id="readingsBody"></tbody>
+
+      </table>
+
     </section>
+
+
+    <!-- MLR AND MLP ANALYSIS -->
+
+    <section id="analysis" class="page hidden">
+
+      <h2 id="analysisTitle">
+        Analysis
+      </h2>
+
+      <p class="help">
+        Calculated on the Python cloud server from
+        the newest Firebase readings, not in the browser.
+      </p>
+
+
+      <!-- ANALYSIS FORM -->
+
+      <form id="analysisForm">
+
+        <div class="form-grid">
+
+          <label>
+            Parameter to predict
+
+            <select name="target">
+
+              <option value="temperature">
+                Temperature
+              </option>
+
+              <option value="humidity">
+                Humidity
+              </option>
+
+            </select>
+          </label>
+
+
+          <label>
+            Steps ahead (readings)
+
+            <input
+              type="number"
+              name="steps"
+              value="1"
+              min="1"
+              max="100"
+              required>
+          </label>
+
+
+          <label>
+            Readings for analysis
+
+            <input
+              type="number"
+              name="rows"
+              value="300"
+              min="60"
+              max="1000"
+              required>
+          </label>
+
+
+          <label>
+            Preprocessing scale
+
+            <select name="scale">
+
+              <option value="none">
+                None
+              </option>
+
+              <option value="normalize">
+                Normalize [0,1]
+              </option>
+
+              <option value="standardize">
+                Standardize (z-score)
+              </option>
+
+            </select>
+          </label>
+
+
+          <label class="check">
+
+            <input
+              type="checkbox"
+              name="removeOutliers">
+
+            Remove outliers (IQR)
+
+          </label>
+
+        </div>
+
+
+        <!-- MLP NEURAL NETWORK PARAMETERS -->
+
+        <fieldset id="mlpParams" class="hidden">
+
+          <legend>
+            MLP neural-network settings
+          </legend>
+
+          <div class="form-grid">
+
+            <label>
+              Input window (readings)
+
+              <input
+                type="number"
+                name="window"
+                value="10"
+                min="2"
+                max="40">
+            </label>
+
+
+            <label>
+              Hidden neurons
+
+              <input
+                type="number"
+                name="hidden"
+                value="12"
+                min="2"
+                max="32">
+            </label>
+
+
+            <label>
+              Hidden layers
+
+              <input
+                type="number"
+                name="hiddenLayers"
+                value="1"
+                min="1"
+                max="2">
+            </label>
+
+
+            <label>
+              Training epochs
+
+              <input
+                type="number"
+                name="epochs"
+                value="200"
+                min="1"
+                max="600">
+            </label>
+
+
+            <label>
+              Learning rate
+
+              <input
+                type="number"
+                name="lr"
+                value="0.01"
+                step="any"
+                min="0.0001"
+                max="0.1">
+            </label>
+
+
+            <label>
+              Momentum
+
+              <input
+                type="number"
+                name="momentum"
+                value="0.9"
+                step="0.05"
+                min="0"
+                max="0.99">
+            </label>
+
+          </div>
+
+        </fieldset>
+
+
+        <!-- ANALYSIS BUTTON -->
+
+        <button id="analyzeBtn" type="submit">
+          ANALYSE DATA ON CLOUD SERVER
+        </button>
+
+      </form>
+
+
+      <!-- ANALYSIS RESULTS -->
+
+      <div
+        id="analysisResult"
+        class="result"
+        aria-live="polite">
+
+        Press Analyse Data to calculate results.
+
+      </div>
+
+
+      <!-- PREDICTION GRAPH CONTROLS -->
+
+      <div class="chart-actions">
+
+        <label for="historyWindow">
+
+          History displayed on forecast graph
+
+          <select id="historyWindow">
+
+            <option value="60">
+              Last 60 readings
+            </option>
+
+            <option value="120">
+              Last 120 readings
+            </option>
+
+            <option value="all">
+              All readings used
+            </option>
+
+          </select>
+
+        </label>
+
+
+        <p id="forecastExplanation" class="help">
+
+          Run the analysis to plot actual Firebase
+          measurements and the future forecast.
+
+        </p>
+
+      </div>
+
+
+      <!-- MLR / MLP FORECAST GRAPH -->
+
+      <div
+        id="forecastPlot"
+        class="plot"
+        role="img"
+        aria-label="Actual sensor readings and model forecast">
+      </div>
+
+    </section>
+
   </main>
-  <footer><div class="container">ELEC 3111 · Tutorial 9 · Firebase data path: <code>tutorial9/readings</code> · No MySQL</div></footer>
+
+
+  <!-- FOOTER -->
+
+  <footer>
+
+    <div class="container">
+
+      ELEC 3111 · Tutorial 9 · Firebase data path:
+      <code>tutorial9/readings</code> · No MySQL
+
+    </div>
+
+  </footer>
+
+
+  <!-- ESP32 AUTOMATIC STATUS MONITORING -->
+
+  <script>
+
+    (() => {
+
+      'use strict';
+
+      // Run only on the dashboard.
+
+      if (
+        location.pathname !== '/' &&
+        location.pathname !== '/index.html'
+      ) {
+        return;
+      }
+
+
+      // BUTTON ELEMENTS
+
+      const statusButton =
+        document.getElementById('esp32Status');
+
+      const statusDetail =
+        document.getElementById('esp32StatusDetail');
+
+
+      if (!statusButton || !statusDetail) {
+        return;
+      }
+
+
+      // ESP32 uploads approximately every 5 seconds.
+      // Mark offline after 60 seconds without a new reading.
+
+      const OFFLINE_AFTER_MS = 60000;
+
+      // Check Firebase every 10 seconds.
+
+      const CHECK_EVERY_MS = 10000;
+
+
+      let latestTime = null;
+
+      let connectionError = false;
+
+      let dataMode = null;
+
+      let busy = false;
+
+
+      // ---------------------------------------
+      // UPDATE STATUS BUTTON
+      // ---------------------------------------
+
+      function setStatus(message, background, detail) {
+
+        statusButton.textContent = message;
+
+        statusButton.style.backgroundColor = background;
+
+        statusDetail.textContent = detail;
+
+      }
+
+
+      // ---------------------------------------
+      // DETERMINE ESP32 STATUS
+      // ---------------------------------------
+
+      function showStatus() {
+
+        if (connectionError) {
+
+          setStatus(
+            '⚪ STATUS UNAVAILABLE',
+            '#64748b',
+            'Cannot contact the cloud API right now.'
+          );
+
+          return;
+        }
+
+
+        if (dataMode && dataMode !== 'FIREBASE_LIVE') {
+
+          setStatus(
+            '🟠 DEMO MODE',
+            '#b45309',
+            'The cloud server is not reporting live Firebase data.'
+          );
+
+          return;
+        }
+
+
+        if (latestTime === null) {
+
+          setStatus(
+            '⚪ NO SENSOR DATA',
+            '#64748b',
+            'No timestamped reading was returned.'
+          );
+
+          return;
+        }
+
+
+        const age = Date.now() - latestTime;
+
+        const recorded =
+          new Date(latestTime).toLocaleString();
+
+
+        // Check for incorrect clock time.
+
+        if (age < -60000) {
+
+          setStatus(
+            '🟠 CHECK CLOCK',
+            '#b45309',
+            'Measurement time is ahead of this browser clock.'
+          );
+
+        }
+
+
+        // ESP32 ONLINE
+
+        else if (age <= OFFLINE_AFTER_MS) {
+
+          const secondsAgo =
+            Math.max(0, Math.floor(age / 1000));
+
+          setStatus(
+            '🟢 ESP32 ONLINE',
+            '#059669',
+            'Last reading ' + secondsAgo +
+            ' seconds ago (' + recorded + ')'
+          );
+
+        }
+
+
+        // ESP32 OFFLINE
+
+        else {
+
+          const secondsAgo =
+            Math.floor(age / 1000);
+
+          setStatus(
+            '🔴 ESP32 OFFLINE',
+            '#dc2626',
+            'No new readings for ' +
+            secondsAgo +
+            ' seconds. Last: ' + recorded
+          );
+
+        }
+
+      }
+
+
+      // ---------------------------------------
+      // READ LATEST DATA FROM FIREBASE API
+      // ---------------------------------------
+
+      async function checkStatus() {
+
+        if (busy) {
+          return;
+        }
+
+        busy = true;
+
+
+        try {
+
+          // Add timestamp to prevent cached responses.
+
+          const url =
+            '/api/readings?limit=1&check=' +
+            Date.now();
+
+
+          const response = await fetch(url, {
+
+            cache: 'no-store'
+
+          });
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              'HTTP ' + response.status
+            );
+
+          }
+
+
+          const data = await response.json();
+
+
+          if (!data.ok) {
+
+            throw new Error(
+              data.error || 'Invalid API response'
+            );
+
+          }
+
+
+          connectionError = false;
+
+          dataMode = data.mode;
+
+
+          // Actual Tutorial 9 API format:
+          // data.latest.time
+
+          const reading =
+            data.latest ||
+            (
+              Array.isArray(data.rows)
+                ? data.rows[0]
+                : null
+            );
+
+
+          const rawTime =
+            reading && Number(reading.time);
+
+
+          // Firebase timestamps normally use milliseconds.
+
+          if (
+            Number.isFinite(rawTime) &&
+            rawTime > 0
+          ) {
+
+            latestTime =
+              rawTime < 100000000000
+                ? rawTime * 1000
+                : rawTime;
+
+          } else {
+
+            latestTime = null;
+
+          }
+
+        }
+
+
+        catch (error) {
+
+          console.error(
+            'ESP32 activity check failed:',
+            error
+          );
+
+          connectionError = true;
+
+        }
+
+
+        finally {
+
+          busy = false;
+
+          showStatus();
+
+        }
+
+      }
+
+
+      // ---------------------------------------
+      // MANUAL STATUS CHECK BUTTON
+      // ---------------------------------------
+
+      statusButton.addEventListener(
+        'click',
+        checkStatus
+      );
+
+
+      // ---------------------------------------
+      // START MONITORING
+      // ---------------------------------------
+
+      // First check immediately.
+
+      checkStatus();
+
+
+      // Automatically check every 10 seconds.
+
+      setInterval(() => {
+
+        if (!document.hidden) {
+
+          checkStatus();
+
+        }
+
+      }, CHECK_EVERY_MS);
+
+
+      // Update the time displayed every second.
+
+      setInterval(
+        showStatus,
+        1000
+      );
+
+
+      // Check again when the browser tab becomes visible.
+
+      document.addEventListener(
+        'visibilitychange',
+        () => {
+
+          if (!document.hidden) {
+
+            checkStatus();
+
+          }
+
+        }
+      );
+
+    })();
+
+  </script>
+
 </body>
 </html>
